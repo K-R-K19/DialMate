@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_contacts"
+        android:title="Contacts"
+        android:icon="@drawable/ic_contacts"/>
+    <item
+        android:id="@+id/nav_recents"
+        android:title="Recents"
+        android:icon="@drawable/ic_tab_recents"/>
+    <item
+        android:id="@+id/nav_dialer"
+        android:title="Dialer"
+        android:icon="@drawable/ic_tab_dialer"/>
+    <item
+        android:id="@+id/nav_profile"
+        android:title="Profile"
+        android:icon="@drawable/ic_tab_profile"/>
+</menu>
