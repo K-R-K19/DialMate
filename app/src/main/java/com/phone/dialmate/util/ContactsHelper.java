@@ -1,54 +1,49 @@
 package com.phone.dialmate.util;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
+
 import com.phone.dialmate.model.Contact;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ContactsHelper {
 
-    public static List<Contact> getContacts(Context ctx) {
-        List<Contact> list = new ArrayList<>();
-        ContentResolver cr = ctx.getContentResolver();
-
-        Cursor cursor = cr.query(
-                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                new String[]{
-                        ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
-                        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                        ContactsContract.CommonDataKinds.Phone.NUMBER
-                },
-                null, null,
-                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
-        );
+    public static List<Contact> getContacts(Context context) {
+        List<Contact> contactList = new ArrayList<>();
+        ContentResolver resolver = context.getContentResolver();
+        Cursor cursor = resolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                null, null, null, ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC");
 
         if (cursor != null) {
-            int idIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID);
-            int nameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
-            int numIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
-
             while (cursor.moveToNext()) {
-                String id = idIdx >= 0 ? cursor.getString(idIdx) : null;
-                String name = nameIdx >= 0 ? cursor.getString(nameIdx) : "";
-                String num = numIdx >= 0 ? cursor.getString(numIdx) : "";
-                list.add(new Contact(id, name, num));
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                String phoneNumber = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                contactList.add(new Contact(name, phoneNumber));
             }
             cursor.close();
         }
-        return list;
+        return contactList;
     }
 
-    public static boolean deleteContact(Context ctx, String contactId) {
-        if (contactId == null) return false;
+    public static boolean updateContact(Context context, Contact contact, String oldNumber) {
         try {
-            Uri contactUri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, Long.parseLong(contactId));
-            int rows = ctx.getContentResolver().delete(contactUri, null, null);
-            return rows > 0;
+            ContentResolver resolver = context.getContentResolver();
+
+            ContentValues values = new ContentValues();
+            values.put(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, contact.getName());
+            values.put(ContactsContract.CommonDataKinds.Phone.NUMBER, contact.getPhoneNumber());
+
+            String where = ContactsContract.CommonDataKinds.Phone.NUMBER + " = ?";
+            String[] params = new String[]{oldNumber};
+
+            int updated = resolver.update(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, values, where, params);
+            return updated > 0;
         } catch (Exception e) {
             e.printStackTrace();
             return false;

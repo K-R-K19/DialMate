@@ -1,52 +1,48 @@
 package com.phone.dialmate.ui;
 
 import android.os.Bundle;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-
+import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.phone.dialmate.R;
+import com.phone.dialmate.fragments.CallLogsFragment;
 import com.phone.dialmate.fragments.ContactsFragment;
-import com.phone.dialmate.fragments.RecentsFragment;
-import com.phone.dialmate.fragments.DialerFragment;
-import com.phone.dialmate.fragments.ProfileFragment;
+import com.phone.dialmate.util.Logger;
 
 public class MainActivity extends AppCompatActivity {
 
-    private BottomNavigationView bottomNav;
+    private BottomNavigationView bottomNavigationView;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Logger.log("MainActivity: onCreate");
 
-        bottomNav = findViewById(R.id.bottom_navigation);
-        bottomNav.setOnItemSelectedListener(item -> {
-            Fragment selected = null;
-            int id = item.getItemId();
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
 
-            if (id == R.id.nav_contacts) selected = new ContactsFragment();
-            else if (id == R.id.nav_recents) selected = new RecentsFragment();
-            else if (id == R.id.nav_dialer) selected = new DialerFragment();
-            else if (id == R.id.nav_profile) selected = new ProfileFragment();
-
-            if (selected != null) {
-                getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.fragment_container, selected)
-                        .commit();
-            }
-            return true;
-        });
-
-        // Load default fragment
         if (savedInstanceState == null) {
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new ContactsFragment())
-                    .commit();
+            loadFragment(new ContactsFragment());
         }
+
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            Fragment f = null;
+            int id = item.getItemId();
+            if (id == R.id.navigation_contacts) f = new ContactsFragment();
+            else if (id == R.id.navigation_call_logs) f = new CallLogsFragment();
+
+            if (f != null) {
+                loadFragment(f);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void loadFragment(@NonNull Fragment fragment) {
+        FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
+        tx.replace(R.id.fragment_container, fragment);
+        tx.commit();
     }
 }

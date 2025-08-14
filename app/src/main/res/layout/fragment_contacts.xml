@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent"
-    android:padding="8dp">
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <EditText
-        android:id="@+id/search_bar"
+        android:id="@+id/search_box"
+        android:hint="Search contacts"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Search contacts"
-        android:imeOptions="actionSearch"/>
+        android:padding="12dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view_contacts"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingTop="8dp"/>
+        android:layout_height="match_parent"/>
 </LinearLayout>

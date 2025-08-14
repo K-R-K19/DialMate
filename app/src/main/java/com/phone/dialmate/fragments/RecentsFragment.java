@@ -1,64 +1,66 @@
 package com.phone.dialmate.fragments;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.CallLog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.phone.dialmate.R;
+import com.phone.dialmate.model.CallLogItem;
 import com.phone.dialmate.ui.CallLogsAdapter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RecentsFragment extends Fragment {
 
-    private static final int REQUEST_CALL_LOG = 100;
-    private CallLogsAdapter adapter;
-
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_recents, container, false);
-    }
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_recents, container, false);
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+        RecyclerView rv = v.findViewById(R.id.recycler_call_logs);
+        if (rv != null) {
+            rv.setLayoutManager(new LinearLayoutManager(requireContext()));
 
-        RecyclerView rv = view.findViewById(R.id.recycler_call_logs);
-        rv.setLayoutManager(new LinearLayoutManager(requireContext()));
-        adapter = new CallLogsAdapter(requireContext());
-        rv.setAdapter(adapter);
-
-        checkPermissionsAndLoadLogs();
-    }
-
-    private void checkPermissionsAndLoadLogs() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CALL_LOG)
-                != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.READ_CALL_LOG}, REQUEST_CALL_LOG);
-        } else {
-            adapter.loadCallLogs();
+            List<CallLogItem> callLogItems = getCallLogs();
+            CallLogsAdapter adapter = new CallLogsAdapter(callLogItems);
+            rv.setAdapter(adapter);
         }
+
+        return v;
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CALL_LOG) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                adapter.loadCallLogs();
+    private List<CallLogItem> getCallLogs() {
+        List<CallLogItem> list = new ArrayList<>();
+        Cursor cursor = requireContext().getContentResolver().query(
+                CallLog.Calls.CONTENT_URI,
+                null, null, null,
+                CallLog.Calls.DATE + " DESC"
+        );
+
+        if (cursor != null) {
+            int numberIndex = cursor.getColumnIndex(CallLog.Calls.NUMBER);
+            int typeIndex = cursor.getColumnIndex(CallLog.Calls.TYPE);
+            int dateIndex = cursor.getColumnIndex(CallLog.Calls.DATE);
+            int durationIndex = cursor.getColumnIndex(CallLog.Calls.DURATION);
+
+            while (cursor.moveToNext()) {
+                String number = cursor.getString(numberIndex);
+                int type = cursor.getInt(typeIndex);
+                long dateMillis = cursor.getLong(dateIndex);
+                String date = android.text.format.DateFormat.format("dd/MM/yyyy hh:mm a", dateMillis).toString();
+                String duration = cursor.getString(durationIndex);
+
+                list.add(new CallLogItem(number, type, date, duration));
             }
+            cursor.close();
         }
+        return list;
     }
 }

@@ -3,6 +3,7 @@ package com.phone.dialmate.fragments;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.Editable;
@@ -11,8 +12,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,78 +23,88 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.phone.dialmate.R;
 import com.phone.dialmate.ui.ContactsAdapter;
 import com.phone.dialmate.model.Contact;
-import com.phone.dialmate.util.ContactsHelper;
+import com.phone.dialmate.ui.EditContactActivity;
+import com.phone.dialmate.util.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContactsFragment extends Fragment {
+public class ContactsFragment extends Fragment implements ContactsAdapter.OnContactClickListener {
 
-    private RecyclerView recyclerView;
-    private ContactsAdapter contactsAdapter;
-    private List<Contact> contactList = new ArrayList<>();
-    private static final int PERM_READ_CONTACTS = 101;
+    private RecyclerView rv;
+    private EditText search;
+    private ContactsAdapter adapter;
+    private final List<Contact> all = new ArrayList<>();
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    private final ActivityResultLauncher<String> reqContacts =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                Logger.log("READ_CONTACTS granted=" + granted);
+                if (granted) loadContacts();
+            });
+
+    @Nullable @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_contacts, container, false);
-
-        recyclerView = v.findViewById(R.id.recycler_view_contacts);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        contactsAdapter = new ContactsAdapter(getContext(), contactList, new ContactsAdapter.ContactClickListener() {
-            @Override
-            public void onCallClick(Contact contact) {
-                Intent i = new Intent(Intent.ACTION_DIAL);
-                i.setData(android.net.Uri.parse("tel:" + contact.getPhoneNumber()));
-                startActivity(i);
-            }
-
-            @Override
-            public void onEditClick(Contact contact) {
-                Intent intent = new Intent(getActivity(), com.phone.dialmate.ui.EditContactActivity.class);
-                intent.putExtra("contact_id", contact.getId());
-                startActivity(intent);
-            }
-
-            @Override
-            public void onDeleteClick(Contact contact) {
-                ContactsHelper.deleteContact(getContext(), contact.getId());
-                loadContacts();
-            }
-        });
-
-        recyclerView.setAdapter(contactsAdapter);
-
-        EditText searchBar = v.findViewById(R.id.search_bar);
-        searchBar.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s,int st,int c,int a){}
-            @Override public void onTextChanged(CharSequence s,int st,int b,int c){
-                contactsAdapter.filter(s.toString());
-            }
-            @Override public void afterTextChanged(Editable s){}
-        });
+        rv = v.findViewById(R.id.recycler_view_contacts);
+        search = v.findViewById(R.id.search_box);
+        rv.setLayoutManager(new LinearLayoutManager(requireContext()));
+        adapter = new ContactsAdapter(new ArrayList<>(), this);
+        rv.setAdapter(adapter);
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CONTACTS)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(),
-                    new String[]{Manifest.permission.READ_CONTACTS}, PERM_READ_CONTACTS);
-        } else {
+                == PackageManager.PERMISSION_GRANTED) {
             loadContacts();
+        } else {
+            reqContacts.launch(Manifest.permission.READ_CONTACTS);
         }
 
+        search.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { filter(s.toString()); }
+            @Override public void afterTextChanged(Editable s) {}
+        });
         return v;
     }
 
     private void loadContacts() {
-        contactList.clear();
-        contactList.addAll(ContactsHelper.getContacts(requireContext()));
-        contactsAdapter.updateContacts(contactList);
+        Logger.log("Contacts: loading…");
+        all.clear();
+        String[] proj = {
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
+        };
+        try (Cursor c = requireContext().getContentResolver().query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI, proj,
+                null, null,
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC")) {
+            if (c != null) {
+                int iName = c.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                int iNum = c.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                while (c.moveToNext()) {
+                    all.add(new Contact(c.getString(iName), c.getString(iNum)));
+                }
+            }
+        }
+        adapter.update(new ArrayList<>(all));
+        Logger.log("Contacts: loaded=" + all.size());
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] perms, @NonNull int[] results) {
-        if (requestCode == PERM_READ_CONTACTS && results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) {
-            loadContacts();
+    private void filter(String q) {
+        q = q == null ? "" : q.toLowerCase();
+        List<Contact> filtered = new ArrayList<>();
+        for (Contact ct : all) {
+            if ((ct.getName() != null && ct.getName().toLowerCase().contains(q)) ||
+                    (ct.getPhoneNumber() != null && ct.getPhoneNumber().contains(q))) {
+                filtered.add(ct);
+            }
         }
+        adapter.update(filtered);
+    }
+
+    @Override public void onContactClick(@NonNull Contact contact) {
+        Intent i = new Intent(requireContext(), EditContactActivity.class);
+        i.putExtra("contact_name", contact.getName());
+        i.putExtra("contact_number", contact.getPhoneNumber());
+        startActivity(i);
     }
 }

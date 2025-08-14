@@ -1,18 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/nav_contacts"
-        android:title="Contacts"
-        android:icon="@drawable/ic_contacts"/>
+        android:id="@+id/navigation_contacts"
+        android:title="Contacts" />
     <item
-        android:id="@+id/nav_recents"
-        android:title="Recents"
-        android:icon="@drawable/ic_tab_recents"/>
-    <item
-        android:id="@+id/nav_dialer"
-        android:title="Dialer"
-        android:icon="@drawable/ic_tab_dialer"/>
-    <item
-        android:id="@+id/nav_profile"
-        android:title="Profile"
-        android:icon="@drawable/ic_tab_profile"/>
+        android:id="@+id/navigation_call_logs"
+        android:title="Call Logs" />
 </menu>
