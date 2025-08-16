@@ -1,29 +1,29 @@
 package com.phone.dialmate.model;
 
-import android.provider.CallLog;
-
 public class CallLogItem {
-    private final String number;
-    private final int type;
-    private final String date;
-    private final String duration;
+    private String number;
+    private int type;       // 1 Incoming, 2 Outgoing, 3 Missed
+    private String date;    // display-formatted
+    private String name;    // may be null
 
-    public CallLogItem(String number, int type, String date, String duration) {
-        this.number = number; this.type = type; this.date = date; this.duration = duration;
+    public CallLogItem(String number, int type, String date, String name) {
+        this.number = number;
+        this.type = type;
+        this.date = date;
+        this.name = name;
     }
 
     public String getNumber() { return number; }
+    public int getType() { return type; }
     public String getDate() { return date; }
-    public String getDuration() { return duration; }
+    public String getName() { return name; }
 
-    public String getCallTypeString() {
+    public String getTypeString() {
         switch (type) {
-            case CallLog.Calls.INCOMING_TYPE: return "Incoming";
-            case CallLog.Calls.OUTGOING_TYPE: return "Outgoing";
-            case CallLog.Calls.MISSED_TYPE:   return "Missed";
-            case CallLog.Calls.REJECTED_TYPE: return "Rejected";
-            case CallLog.Calls.VOICEMAIL_TYPE:return "Voicemail";
-            default: return "Other";
+            case 1: return "Incoming";
+            case 2: return "Outgoing";
+            case 3: return "Missed";
+            default: return "Unknown";
         }
     }
 }

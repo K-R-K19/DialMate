@@ -1,18 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:gravity="center"
+    android:padding="12dp"
+    android:gravity="center_horizontal"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/tv_dialer"
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/input_number"
+        android:inputType="phone"
+        android:hint="Enter number"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Dialer Screen"
-        android:textSize="24sp"
-        android:textColor="@android:color/black"
-        android:textStyle="bold" />
+        android:textSize="22sp"
+        android:padding="8dp" />
+
+    <GridLayout
+        android:id="@+id/keypad"
+        android:columnCount="3"
+        android:rowCount="4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:alignmentMode="alignMargins"
+        android:useDefaultMargins="true"
+        android:layout_marginTop="16dp">
+
+        <!-- Digits 1-9 -->
+        <Button android:id="@+id/btn_1" android:text="1"
+            android:layout_width="0dp" android:layout_height="60dp" />
+        <Button android:id="@+id/btn_2" android:text="2" />
+        <Button android:id="@+id/btn_3" android:text="3" />
+        <Button android:id="@+id/btn_4" android:text="4" />
+        <Button android:id="@+id/btn_5" android:text="5" />
+        <Button android:id="@+id/btn_6" android:text="6" />
+        <Button android:id="@+id/btn_7" android:text="7" />
+        <Button android:id="@+id/btn_8" android:text="8" />
+        <Button android:id="@+id/btn_9" android:text="9" />
+        <!-- * 0 # -->
+        <Button android:id="@+id/btn_star" android:text="*" />
+        <Button android:id="@+id/btn_0" android:text="0" />
+        <Button android:id="@+id/btn_hash" android:text="#" />
+    </GridLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp">
+
+        <Button
+            android:id="@+id/btn_delete"
+            android:text="Delete"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"/>
+
+        <Button
+            android:id="@+id/btn_call"
+            android:text="Call"
+            android:layout_width="0dp"
+            android:layout_weight="2"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
 
 </LinearLayout>

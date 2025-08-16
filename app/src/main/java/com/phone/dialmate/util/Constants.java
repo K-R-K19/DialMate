@@ -1,4 +1,4 @@
-package com.phone.dialmate;
+package com.phone.dialmate.util;
 
 public final class Constants {
     private Constants() {}
